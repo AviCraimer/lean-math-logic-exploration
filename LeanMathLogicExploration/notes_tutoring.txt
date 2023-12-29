@@ -1,0 +1,32 @@
+
+
+Apply
+
+theorem h1 :P -> Q
+
+apply h1
+- Pattern matches the Q with the current goal
+- Based on the pattern matched with Q, it assigns the free variables in P
+- The new goal is to prove the specified version of P since this implies the specified version of Q.
+
+
+theorem h2:  P1 -> P2 -> Q
+
+apply h2
+- Now we have two goals
+
+
+
+theorem dumb {a b : R}(h1: a = 0)(h2: b = 0) : a = b := by
+  rw [h1, h2]
+
+theorem dumb2 {a b c :R}(h1: a + b = 0)(h2: c = 0) : a + b = c := by
+  apply dumb
+  · assumption
+  . assumption
+
+  -- The <;> is parrelall composition of tactics, applying the tactic on the right to all of the goals that come from the tactic on the left.
+  -- apply dumb <;> assumption
+
+  -- this is the more direct way to do it
+  -- exact dumb h1 h2
