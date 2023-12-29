@@ -17,6 +17,8 @@ apply h2
 
 
 
+Demonstrating using apply with multiple goals (contrived example):
+
 theorem dumb {a b : R}(h1: a = 0)(h2: b = 0) : a = b := by
   rw [h1, h2]
 
