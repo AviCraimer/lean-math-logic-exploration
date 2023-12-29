@@ -47,7 +47,9 @@ match t with
 
 
 
-
+structure CtxEl :=
+  type: SimpType
+  name: String := ""
 
 inductive Context :=
 | emptyCtx
@@ -75,6 +77,17 @@ def Context.get? (c:Context)(index: Nat) : Option SimpType :=
 match c with
  | emptyCtx => none
  | fullCtx t ts => (t::ts).get? index
+
+#check List.get
+
+-- def Context.get (c:Context)(index : Fin (c.length)) : SimpType :=
+-- match c with
+--  | emptyCtx => none
+--  | fullCtx t ts => (t::ts).get index
+def Context.toList (c: Context): List SimpType :=
+match c with
+  | emptyCtx => []
+  | fullCtx t ts => t::ts
 
 def Context.fromList (list: List SimpType):Context :=
 match list with
@@ -112,7 +125,7 @@ inductive TermSyntax :=
 inductive Term : Context -> TermSyntax -> SimpType -> Type where
 -- Given any Context, the variable's index picks out a simple type in the context.
 -- The name is for infoview only, it is not used for computation or equality comparison
-  | var ( ctx : Context) (index: Nat) (h: ctx.length > index) (name: String := ""): Term ctx TermSyntax.var
+  | var ( ctx : Context) (index: Fin (ctx.toList.length))  (name: String := ""): Term ctx TermSyntax.var (ctx.toList.get index)
 
   -- Provide any term with a non-empty context.
   -- The lambda abstracts over the head of the context of the body
@@ -134,22 +147,22 @@ open Term
 
 
 -- Why doesn't this work?
-def testVar : Term testCtx TermSyntax.var  := var testCtx  1 (by admit)  "x"
-
-
+def testVar  := var testCtx ⟨ 2, by decide⟩ "x"
 
 
 def Term.toString (t: Term ctx syn sType)(inner: Bool := false) :=
-let bracketWrap := fun (x:String) => if  inner then "("++ x ++ ")" else x
 let ctxStr := if inner then "" else ctx.toString
+let wrap := fun (x:String) => ctxStr ++ if  inner then "("++ x ++ ")" else x
   match t with
-    | var  _ _ index varName => ctxStr ++  bracketWrap (varName ++ ":" ++ sType.toString)
-    | lamAbs body _ => sorry
-    | app f arg => sorry
-    | equals _ eqSideType => sorry
-    | equalsPartial _ term1 => sorry
+    | var  _ _ varName =>   wrap (varName ++ ":" ++ sType.toString)
+    | lamAbs body => wrap ( (body.toString true)  )
+    | _ => "sorry"
+    -- | app f arg => sorry
+    -- | equals _ eqSideType => sorry
+    -- | equalsPartial _ term1 => sorry
 
 
+#eval testVar.toString
 #check (·<3)
 
 -- I need to understand equalities and inequalities in terms of proof.
