@@ -49,16 +49,27 @@ match t with
 
 structure CtxEl :=
   type: SimpType
-  name: String := ""
+  name: String
+
+def CtxEl.toString (el : CtxEl) :=  el.name ++ ":" ++ el.type.toString
+
+
+instance : Repr CtxEl where
+  reprPrec t _ := CtxEl.toString t
+
+instance : ToString CtxEl where
+  toString t := CtxEl.toString t
+
+#eval CtxEl.mk ind "x"
 
 inductive Context :=
 | emptyCtx
-| fullCtx (t: SimpType) (ts: List SimpType)
+| fullCtx (t: CtxEl) (ts: List CtxEl)
 
-def Context.extend (c: Context) (newType: SimpType) :=
+def Context.extend (c: Context) (newEl: CtxEl) :=
 match c with
-  | emptyCtx => fullCtx newType []
-  | fullCtx t ts => fullCtx newType (t::ts)
+  | emptyCtx => fullCtx newEl []
+  | fullCtx t ts => fullCtx newEl (t::ts)
 
 def Context.tail (c: Context) :=
 match c with
@@ -66,36 +77,28 @@ match c with
   | fullCtx _ (x::ts) => fullCtx x ts
   | fullCtx _ [] => emptyCtx
 
-def Context.head (c: Context) (_: c = (fullCtx t ts)) : SimpType := t
+def Context.head (c: Context) (_: c = (fullCtx t ts)) : CtxEl := t
 
 def Context.length (c:Context):Nat :=
  match c with
   | emptyCtx => 0
   | fullCtx _ ts => ts.length + 1
 
-def Context.get? (c:Context)(index: Nat) : Option SimpType :=
-match c with
- | emptyCtx => none
- | fullCtx t ts => (t::ts).get? index
-
-#check List.get
-
--- def Context.get (c:Context)(index : Fin (c.length)) : SimpType :=
--- match c with
---  | emptyCtx => none
---  | fullCtx t ts => (t::ts).get index
-def Context.toList (c: Context): List SimpType :=
+def Context.toList (c: Context): List CtxEl :=
 match c with
   | emptyCtx => []
   | fullCtx t ts => t::ts
 
-def Context.fromList (list: List SimpType):Context :=
+def Context.toTypes (c: Context): List SimpType := c.toList.map (fun (el:CtxEl) => el.type )
+
+def Context.toNames (c: Context): List String := c.toList.map (fun (el:CtxEl) => el.name )
+
+def Context.fromList (list: List CtxEl):Context :=
 match list with
 | [] => emptyCtx
 | x::xs => fullCtx x xs
 
-
-def testCtx : Context := Context.fullCtx unit  [ind, ind ⟶ truthVal]
+def testCtx : Context := Context.fullCtx (CtxEl.mk unit "x")  [CtxEl.mk ind "p", CtxEl.mk (ind ⟶ truthVal) "f"]
 
 #eval testCtx.length
 
@@ -125,7 +128,7 @@ inductive TermSyntax :=
 inductive Term : Context -> TermSyntax -> SimpType -> Type where
 -- Given any Context, the variable's index picks out a simple type in the context.
 -- The name is for infoview only, it is not used for computation or equality comparison
-  | var ( ctx : Context) (index: Fin (ctx.toList.length))  (name: String := ""): Term ctx TermSyntax.var (ctx.toList.get index)
+  | var ( ctx : Context) (index: Fin (ctx.toList.length)) : Term ctx TermSyntax.var (ctx.toList.get index).type
 
   -- Provide any term with a non-empty context.
   -- The lambda abstracts over the head of the context of the body
@@ -133,9 +136,11 @@ inductive Term : Context -> TermSyntax -> SimpType -> Type where
 -- e.g.,
 --   i, o, i ⊢ 0 1 2
 --   i, o ⊢ λ (i, o, i ⊢ 0 1 2 )
-  | lamAbs (body: Term (Context.fullCtx dom tail) bodySyn cod)  :  Term (Context.fromList tail) TermSyntax.lamAbs (dom ⟶ cod)
+  | lamAbs (body: Term (Context.fullCtx domEl tail) bodySyn codType)   :  Term (Context.fromList tail) TermSyntax.lamAbs ((domEl.type) ⟶ (codType))
+-- Issue: You can't apply the variable to the lambda because they will have different contexts!
 
-  | app (f: Term  ctx  TermSyntax.lamAbs (func dom cod)) (arg: Term ctx argSyn dom) : Term ctx TermSyntax.app cod
+
+  | app (f: Term  ctx  TermSyntax.lamAbs (dom ⟶ cod)) (arg: Term ctx argSyn dom) : Term ctx TermSyntax.app cod
 
   -- A constant equality term (called Q in the Q0 notation)
   | equals (ctx: Context) (sType: SimpType) : Term ctx TermSyntax.equals (sType ⟶ (sType ⟶ truthVal))
@@ -146,23 +151,32 @@ inductive Term : Context -> TermSyntax -> SimpType -> Type where
 open Term
 
 
--- Why doesn't this work?
-def testVar  := var testCtx ⟨ 2, by decide⟩ "x"
 
+def Term.varName (x: Term ctx TermSyntax.var sType ):=
+match x with
+| var ctx index => (ctx.toList.get index).name
+
+def Term.toContext (_: Term ctx syn sType) := ctx
+def Term.toType  (_: Term ctx syn sType) := sType
 
 def Term.toString (t: Term ctx syn sType)(inner: Bool := false) :=
 let ctxStr := if inner then "" else ctx.toString
 let wrap := fun (x:String) => ctxStr ++ if  inner then "("++ x ++ ")" else x
   match t with
-    | var  _ _ varName =>   wrap (varName ++ ":" ++ sType.toString)
-    | lamAbs body => wrap ( (body.toString true)  )
-    | _ => "sorry"
-    -- | app f arg => sorry
-    -- | equals _ eqSideType => sorry
-    -- | equalsPartial _ term1 => sorry
+    | var ctx index => wrap ((ctx.toList.get index).name  ++ ":" ++ sType.toString)
+    | lamAbs body => wrap ( "λ(" ++ (body.toContext.head (by rfl)).toString ++ ")."  ++ (body.toString true) )
+    | app f arg => wrap (f.toString true ++ arg.toString true )
+    | equals _ side => wrap ( "Q:" ++  (side ⟶ (side ⟶ truthVal)).toString )
+    | equalsPartial _ term1 => wrap ( "Q:" ++  (term1.toType ⟶ (term1.toType ⟶ truthVal)).toString ++ (term1.toString true) )
 
 
+def testVar  := var testCtx ⟨ 2, by decide⟩
 #eval testVar.toString
+
+def testLambda := lamAbs testVar
+#eval testLambda.toString
+
+-- def testApp := app testLambda testVar
 #check (·<3)
 
 -- I need to understand equalities and inequalities in terms of proof.
