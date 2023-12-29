@@ -46,35 +46,8 @@ match t with
 | func _ cod => cod
 
 
-inductive TermSyntax :=
-| lamAbs
-| var
-| app
-| equals
-| equalsPartial
 
--- inductive Term : TermSyntax -> SimpType -> Type where
 
---   | var (sType: SimpType) (term: sType.toLeanType) : Term TermSyntax.var sType
-
---   -- An abstraction must be a function type.
---   -- Since we are using lean types and terms for the lambda implementation we don't need to worry about abstracting over variables, etc.
---   | lamAbs (dom: SimpType) (cod: SimpType)  (term: (dom ⟶ cod).toLeanType ) : Term TermSyntax.lamAbs (dom ⟶ cod)
-
---   -- An application stores a function and its argument and has the type of the functions codomain.
---   | app (f: Term TermSyntax.lamAbs (func dom cod)) (arg: Term x dom) : Term TermSyntax.app cod
-
---   -- A constant equality term (called Q in the Q0 notation)
---   | equals (sType: SimpType) : Term TermSyntax.equals (sType ⟶ (sType ⟶ truthVal))
-
---   -- A Q constant with one side applied.
---   | equalsPartial (sType: SimpType) (term1: Term syn1 sType)  : Term TermSyntax.equalsPartial (sType ⟶ truthVal)
--- open Term
-
--- inductive CtxSyn :=
--- | empty
--- | singleMember
--- | multiMember
 
 inductive Context :=
 | emptyCtx
@@ -128,14 +101,14 @@ instance : ToString Context where
 #eval testCtx
 #eval Context.emptyCtx
 
+inductive TermSyntax :=
+| lamAbs
+| var
+| app
+| equals
+| equalsPartial
 
--- abbrev FinIndex (length: ℕ ) := { (n:ℕ) | n < length }
 
--- def testFin : FinIndex [1,2,3].length := ⟨ 2, by dsimp⟩
-
--- #eval testFin
-
--- Using traditional lambda calc
 inductive Term : Context -> TermSyntax -> SimpType -> Type where
 -- Given any Context, the variable's index picks out a simple type in the context.
 -- The name is for infoview only, it is not used for computation or equality comparison
