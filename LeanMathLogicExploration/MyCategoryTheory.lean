@@ -1,8 +1,8 @@
 import MathLib.Tactic
 set_option pp.coercions false
 
-class Category where
-  Obj: Type*
+class Category (Obj: Type*) where
+  Obj := Obj
   Hom (A: Obj) (B: Obj): Type*
   id (X:Obj) : Hom X X
   comp {A B C : Obj} (f: Hom A B) (g: Hom B C) : Hom A C
@@ -12,9 +12,9 @@ class Category where
   unit_left (f: Hom A B) : comp (id A) f = f
   comp_assoc {A B C D: Obj}(f: Hom A B)(g: Hom B C)(h: Hom C D) : comp f (comp g h) = comp (comp f g) h
 
--- Is there a difference between using instance and using def in this context?
-instance TypeCat : Category where
-  Obj := Type
+def SetCat := Type
+
+instance  : Category SetCat where
   Hom A B := A → B
   id _ := λ x => x
   comp f g x := g (f x)
@@ -22,9 +22,52 @@ instance TypeCat : Category where
   unit_left _ := rfl
   comp_assoc _ _ _ := rfl
 
+#check SetCat
+
+class CatFunctor [Category Dom][Category Cod] :=
+  objMap (A: Dom.Obj): Cod.Obj
+
+  funcMap {A B: Dom.Obj} (f: Dom.Hom A B) : Cod.Hom (objMap A) (objMap B)
+
+  -- The id morphism of each object in C is sent by fMap to the id morphism in Category D
+  func_map_id : ∀ (A : Dom.Obj),
+    let idA := Dom.id A
+    let FA := objMap A
+    funcMap idA = Cod.id FA
+
+  func_map_comp {A B C: Dom.Obj} (f : Dom.Hom A B) (g : Dom.Hom B C) : funcMap (Dom.comp f g) = Cod.comp (funcMap f) (funcMap g)
+
+
+class NatTrans (F G: CatFunctor C D) :=
+  component (X : C.Obj) :
+    D.Hom (F.objMap X) (G.objMap X)
+
+  naturality : (f: C.Hom X Y) ->
+      let Ff := F.funcMap f
+      let Gf := G.funcMap f
+      let α_X := component X
+      let α_Y := component Y
+      D.comp Ff α_Y = D.comp α_X Gf
+
+-- Is there any
+def identityNatTrans (F: CatFunctor C D) : NatTrans F F where
+  component X := D.id (F.objMap X)
+  naturality f := sorry
+
+
+def FunctorCat (C D: Category) : Category where
+  Obj := CatFunctor C D
+  Hom := fun (A B: CatFunctor C D) => NatTrans A B
+  id := fun (F: CatFunctor C D) => identityNatTrans F
+    -- I've got to define the identity natrual transformation.
+  comp  := sorry -- {A B C: CatFunctor C D} => fun (f: NatTrans A B) => fun (g: NatTrans B C )
+  unit_right := sorry
+  unit_left := sorry
+  comp_assoc := sorry
 
 
 
+-- # Diagram Category for defining Grph
 instance GraphDiagramCat : Category where
   Obj := ({"E", "V"}: Set String)
 
@@ -54,50 +97,8 @@ instance GraphDiagramCat : Category where
   unit_left f := by rfl
   comp_assoc := by rfl
 
-
-
-
-class CatFunctor (Dom Cod: Category) :=
-  objMap (A: Dom.Obj): Cod.Obj
-
-  funcMap {A B: Dom.Obj} (f: Dom.Hom A B) : Cod.Hom (objMap A) (objMap B)
-
-  -- The id morphism of each object in C is sent by fMap to the id morphism in Category D
-  func_map_id : ∀ (A : Dom.Obj),
-    let idA := Dom.id A
-    let FA := objMap A
-    funcMap idA = Cod.id FA
-
-  func_map_comp {A B C: Dom.Obj} (f : Dom.Hom A B) (g : Dom.Hom B C) : funcMap (Dom.comp f g) = Cod.comp (funcMap f) (funcMap g)
-
-
-class NatTrans (F G: CatFunctor C D) :=
-  component (X : C.Obj) :
-    D.Hom (F.objMap X) (G.objMap X)
-
-  naturality : (f: C.Hom X Y) ->
-      let Ff := F.funcMap f
-      let Gf := G.funcMap f
-      let α_X := component X
-      let α_Y := component Y
-      D.comp Ff α_Y = D.comp α_X Gf
-
-def identityNatTrans (F: CatFunctor C D) : NatTrans F F where
-  component X := D.id (F.objMap X)
-  naturality f := sorry
-
-
-def FunctorCat (C D: Category) : Category where
-  Obj := CatFunctor C D
-  Hom := fun (A B: CatFunctor C D) => NatTrans A B
-  id := fun (F: CatFunctor C D) => identityNatTrans F
-    -- I've got to define the identity natrual transformation.
-  comp  := sorry -- {A B C: CatFunctor C D} => fun (f: NatTrans A B) => fun (g: NatTrans B C )
-  unit_right := sorry
-  unit_left := sorry
-  comp_assoc := sorry
-
-
+-- The category of graphs defined as the functor category from graph diagram to TypeCat (which is analogous to Set in category theory).
+instance Grph : Category := FunctorCat GraphDiagramCat TypeCat
 
 
 -- # FINITELY PRESENTABLE CATEGORIES using explicit generators - work in progress
