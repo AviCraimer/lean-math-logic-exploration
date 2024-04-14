@@ -206,7 +206,7 @@ abbrev Quiver0 := @Quiver Type
 
 class QuiverObj where
    Q : Type
-   str : Quiver Q
+   str : Quiver.{1} Q
 
 def copairing (f: γ    -> α  ) (g: γ   -> β  ): γ -> (α × β ) := fun x  => ((f x), g x)
 /--
@@ -220,7 +220,7 @@ theorem equiv_graph_quiver :  Graph ≃ QuiverObj  where
       Hom := fun u v =>
         let src := g.funcMap  GraphDiagram.Morph.src
         let trg := g.funcMap  GraphDiagram.Morph.trg
-        ({ e :  (g.objMap GraphDiagram.Obj.E) // src e = u ∧ trg e = v })
+        ({ e : (g.objMap GraphDiagram.Obj.E) // src e = u ∧ trg e = v })
     }
   }
   invFun q := sorry
