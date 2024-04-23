@@ -9,7 +9,6 @@ inductive Relation : (Dom Cod : Type u) -> Type (max u + 1 )
 | atomic (f:Relation.Pairs α β) : Relation α β
 | comp (R:Relation α β) (S:Relation β γ) : Relation α γ
 | full (α β: Type u): Relation α β
-| id  (α: Type u)  :  Relation α α
 | converse (R:Relation α β) : Relation β α
 | complement (R:Relation α β) : Relation α β
 | product (R: Relation α β )(S: Relation γ δ) : Relation (α × γ ) (β × δ)
@@ -32,6 +31,10 @@ def Relation.empty (α β :Type u) := complement (full α β)
 def Relation.same (α : Type u) := converse (copy α)
 def Relation.different (α: Type u) := neg (copy α)
 
+-- The identity relation is the composition of copy and same
+def Relation.id (α : Type u) := comp (copy α) (same α)
+def Relation.notEqual (α : Type u) := complement (Relation.id α)
+
 def Relation.domain (_: Relation α β) := α
 def Relation.codomain (_: Relation α β) := β
 
@@ -42,7 +45,6 @@ match R' with
 | comp R S => fun (a : R.domain) (b : S.codomain) =>
   ∃ (c : S.domain), Relation.eval R a c ∧ Relation.eval S c b
 | full α β => fun _ _ => True
-| id α => fun a b => a = b
 | converse R => fun a b => (Relation.eval R b a)
 | complement R => fun a b => ¬(Relation.eval R a b)
 | product R S => fun (a: (product R S).domain)(b: (product R S).codomain) => (Relation.eval R a.1 b.1) ∧ (Relation.eval S a.2 b.2)
@@ -52,7 +54,6 @@ match R' with
   | Sum.inr a', Sum.inr b' => Relation.eval S a' b'
   | _, _ => False
 | copy α => fun a (a1, a2) => a = a1 ∧ a = a2
-
 
 
 @[simp]
@@ -142,7 +143,7 @@ theorem Relation.converse_coproduct (R: Relation α β) (S: Relation γ δ) :
 
 @[simp]
 theorem Relation.complement_coproduct (R: Relation α β) (S: Relation γ δ) :
-eval (complement (coproduct R S)) = eval (with (complement R) (complement S)) := by
+eval (complement (coproduct R S)) = eval (Relation.with (complement R) (complement S)) := by
 apply funext; intro ab; apply funext; intro cd
 cases ab <;> cases cd
 . simp [Relation.eval]
@@ -158,9 +159,6 @@ cases ab <;> cases cd
 -- eval (product (coproduct R S) T) = eval (coproduct (product R T) (product S T))  := by sorry
 
 --  Equiv.sumProdDistrib is the distributivity equivalence for Sum and Product types. We need to apply this so the types match on either side of the eqution.
-
-#print Relation.eval
-#print Relation.Pairs
 
 
 -- (R⊕S)⊗T = (R⊗T)⊕(S⊗T)
@@ -179,29 +177,29 @@ theorem Relation.coproduct_product_dist (R: Relation α β) (S: Relation γ δ) 
   . simp
   . simp
 
--- T⊕(R⊗S) = (T⊕R) ⊗ (T⊕S)
-theorem Relation.product_coproduct_dist (R: Relation α β) (S: Relation γ δ) (T: Relation ε ζ) :
-  eval (coproduct T (product R S)) =
-    fun (a:(ε ⊕ α × γ)) (b: ζ ⊕ β × δ) =>
-      let coprodTimesCoprod := eval (product (coproduct T R) (coproduct T S))
+-- -- T⊕(R⊗S) = (T⊕R) ⊗ (T⊕S)
+-- theorem Relation.product_coproduct_dist (R: Relation α β) (S: Relation γ δ) (T: Relation ε ζ) :
+--   eval (coproduct T (product R S)) =
+--     fun (a:(ε ⊕ α × γ)) (b: ζ ⊕ β × δ) =>
+--       let coprodTimesCoprod := eval (product (coproduct T R) (coproduct T S))
 
-      let isoA := (Equiv.prodSumDistrib ε α γ )
-      let isoA' := (Equiv.sumProdDistrib ε α γ )
-       -- I need:   ε ⊕ α × γ ≃ (ε ⊕ α) × (ε ⊕ γ))
-       -- Equiv.prodSumDistrib ε α γ gives: ε × (α ⊕ γ) ≃ ε × α ⊕ ε × γ
-       -- Equiv.sumProdDistrib ε α γ gives: (ε ⊕ α) × γ ≃ ε × γ ⊕ α × γ
-       -- These are just two sides of the same distributive law. But I need the other distributive law for adding over a product.
+--       let isoA := (Equiv.prodSumDistrib ε α γ )
+--       let isoA' := (Equiv.sumProdDistrib ε α γ )
+--        -- I need:   ε ⊕ α × γ ≃ (ε ⊕ α) × (ε ⊕ γ))
+--        -- Equiv.prodSumDistrib ε α γ gives: ε × (α ⊕ γ) ≃ ε × α ⊕ ε × γ
+--        -- Equiv.sumProdDistrib ε α γ gives: (ε ⊕ α) × γ ≃ ε × γ ⊕ α × γ
+--        -- These are just two sides of the same distributive law. But I need the other distributive law for adding over a product.
 
 
-      let isoB := (Equiv.prodSumDistrib β δ ζ)
-      coprodTimesCoprod (isoA a) (isoB b) := by
-  apply funext; intro a; apply funext; intro b
-  dsimp [Relation.eval, Equiv.sumProdDistrib]
-  cases a <;> cases b
-    . simp
-    . simp
-    . simp
-    . simp
+--       let isoB := (Equiv.prodSumDistrib β δ ζ)
+--       coprodTimesCoprod (isoA a) (isoB b) := by
+--   apply funext; intro a; apply funext; intro b
+--   dsimp [Relation.eval, Equiv.sumProdDistrib]
+--   cases a <;> cases b
+--     . simp
+--     . simp
+--     . simp
+--     . simp
 
 
 -- theorem Relation.product_coproduct__dist (R: Relation α β) (S: Relation γ δ) (T: Relation ε ζ) :
