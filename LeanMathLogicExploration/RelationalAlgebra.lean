@@ -14,7 +14,27 @@ inductive Relation : (Dom Cod : Type u) -> Type (max u + 1 )
 | product (R: Relation α β )(S: Relation γ δ) : Relation (α × γ ) (β × δ)
 | coproduct (R: Relation α β )(S: Relation γ δ) : Relation (Sum α γ ) (Sum β δ)
 | copy (α :Type u): Relation α (α × α)
+| cocopy (α: Type u): Relation (Sum α α) α
+| first (α β: Type u): Relation (α × β) α
+| second (α β: Type u): Relation (α × β) β
+
+
 open Relation
+
+
+-- **DEFINED RELATION OPERATIONS** --
+
+-- Converse of copy / diagonal
+def Relation.merge (α) := converse (copy α)
+
+-- Compositional definition of intersection of relations. I should prove that this yeilds the set theoretic definition of intersection of pairs.
+def Relation.intersection (R: Relation α β) (S: Relation α β) := comp (comp (copy α) (product R S)) (Relation.merge β)
+
+-- Sends each a in α to left a and right a
+def Relation.split  (α : Type u) := converse (cocopy α)
+
+-- Compositional definition of union of relations. I should prove that this yeilds the set theoretic definition of union of pairs.
+def Relation.union (R: Relation α β) (S: Relation α β) := comp (comp (Relation.split α) (coproduct R S)) (cocopy β)
 
 def Relation.relativeComp (R:Relation α β) (S:Relation β γ) := complement (comp (complement R) (complement S))
 
@@ -38,6 +58,8 @@ def Relation.notEqual (α : Type u) := complement (Relation.id α)
 def Relation.domain (_: Relation α β) := α
 def Relation.codomain (_: Relation α β) := β
 
+
+
 -- Relation.eval takes a relation and returns a function that tells use whether a pair is in the function.
 def Relation.eval (R':Relation α β) : Relation.Pairs α β :=
 match R' with
@@ -54,7 +76,39 @@ match R' with
   | Sum.inr a', Sum.inr b' => Relation.eval S a' b'
   | _, _ => False
 | copy α => fun a (a1, a2) => a = a1 ∧ a = a2
+| cocopy α => fun (aa) a =>
+  match aa with
+  | Sum.inl a' => a' = a
+  | Sum.inr a' => a' = a
+| first α β  => fun pair a => pair.1 = a
+| second α β => fun pair b => pair.2 = b
 
+
+-- Deletes by relating to the tensor product unit
+-- def Relation.delete {α : Type u} := Relation.full α PUnit
+
+
+
+theorem coproduct_square_equiv_prod : α ⊕ α ≃ Bool × α :=
+  Equiv.mk
+    (fun x => match x with
+      | Sum.inl a => (false, a)
+      | Sum.inr a => (true, a))
+    (fun p => match p with
+      | (false, a) => Sum.inl a
+      | (true, a) => Sum.inr a)
+    (by
+      intro x
+      cases x <;> rfl
+      )
+    (by
+      intro p
+      cases p with
+      | mk b a =>
+        cases b <;> rfl
+    )
+
+-- theorem Relation.coproduct_square_equiv_prod (R: Relation.coproduct  ):
 
 @[simp]
 theorem Relation.double_converse (R: Relation α β) : eval (converse (converse R)) = eval R := by
