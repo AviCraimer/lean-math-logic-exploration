@@ -13,11 +13,13 @@ inductive Relation : (Dom Cod : Type u) -> Type (max u + 1 )
 | complement (R:Relation α β) : Relation α β
 | product (R: Relation α β )(S: Relation γ δ) : Relation (α × γ ) (β × δ)
 | coproduct (R: Relation α β )(S: Relation γ δ) : Relation (Sum α γ ) (Sum β δ)
+-- Structural morphisms
 | copy (α :Type u): Relation α (α × α)
 | cocopy (α: Type u): Relation (Sum α α) α
 | first (α β: Type u): Relation (α × β) α
 | second (α β: Type u): Relation (α × β) β
-
+| left (α β :Type u): Relation α (Sum α β)
+| right (α β :Type u): Relation α (Sum β α)
 
 open Relation
 
@@ -29,6 +31,8 @@ def Relation.merge (α) := converse (copy α)
 
 -- Compositional definition of intersection of relations. I should prove that this yeilds the set theoretic definition of intersection of pairs.
 def Relation.intersection (R: Relation α β) (S: Relation α β) := comp (comp (copy α) (product R S)) (Relation.merge β)
+
+
 
 -- Sends each a in α to left a and right a
 def Relation.split  (α : Type u) := converse (cocopy α)
@@ -48,11 +52,10 @@ def Relation.with (R: Relation α β )(S: Relation γ δ) :=  neg (coproduct (ne
 
 def Relation.empty (α β :Type u) := complement (full α β)
 
-def Relation.same (α : Type u) := converse (copy α)
 def Relation.different (α: Type u) := neg (copy α)
 
--- The identity relation is the composition of copy and same
-def Relation.id (α : Type u) := comp (copy α) (same α)
+-- The identity relation is the composition of copy and merge
+def Relation.id (α : Type u) := comp (copy α) (merge α)
 def Relation.notEqual (α : Type u) := complement (Relation.id α)
 
 def Relation.domain (_: Relation α β) := α
@@ -82,11 +85,62 @@ match R' with
   | Sum.inr a' => a' = a
 | first α β  => fun pair a => pair.1 = a
 | second α β => fun pair b => pair.2 = b
+| left α β => fun a ab =>
+  match ab with
+  | Sum.inl a' => a = a'
+  | _ => False
+| right α β => fun a ba =>
+  match ba with
+  | Sum.inr a' => a = a'
+  | _ => False
+
+abbrev intersect_pairs_def (R: Relation α β) (S: Relation α β): Pairs α β  := fun a b => (eval R) a b ∧ (eval S) a b
+
+theorem Relation.intersect_pairs (R: Relation α β) (S: Relation α β) : eval (Relation.intersection R S) = intersect_pairs_def R S := by
+apply funext
+intro a
+apply funext
+intro b
+simp [Relation.eval, intersect_pairs_def, Relation.intersection]
+constructor
+intro ⟨⟨c1, c2⟩, ⟨⟨a1, a2⟩, ⟨ha1, ha2⟩, hr, hs⟩, ⟨hb1, hb2⟩⟩
+subst ha1
+subst ha2
+subst hb1
+subst hb2
+exact ⟨hr, hs⟩
+intro ⟨hr, hs⟩
+use (b, b)
+constructor
+use (a, a)
+constructor <;> rfl
 
 
--- Deletes by relating to the tensor product unit
--- def Relation.delete {α : Type u} := Relation.full α PUnit
+abbrev union_pairs_def (R: Relation α β) (S: Relation α β): Pairs α β  := fun a b => (eval R) a b ∨ (eval S) a b
 
+theorem Relation.union_pairs (R: Relation α β) (S: Relation α β) : eval (Relation.union R S) = union_pairs_def R S := by
+apply funext
+intro a
+apply funext
+intro b
+simp [Relation.eval, union_pairs_def, Relation.union]
+constructor
+intro ⟨c, ⟨c₁, h₁, h₂⟩, h₃⟩
+cases c₁ <;> cases c <;> simp at h₁ h₂ h₃ <;> subst h₁<;> subst h₃
+· exact Or.inl h₂
+· exact Or.inr h₂
+· intro h4
+  cases h4 with
+  | inl h4R =>
+    use Sum.inl b
+    constructor
+    use Sum.inl a
+    constructor
+  | inr hS =>
+    use Sum.inr b
+    constructor
+    use Sum.inr a
+    constructor
 
 
 theorem coproduct_square_equiv_prod : α ⊕ α ≃ Bool × α :=
