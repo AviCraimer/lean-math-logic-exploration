@@ -5,8 +5,9 @@ universe u v
 
 abbrev Relation.Pairs α β  := (a:α) -> (b:β) -> Prop
 
-inductive Relation : (Dom Cod : Type u) -> Type (max u + 1 )
+inductive Relation : (Dom Cod : Type u) -> Type (u + 1)
 | atomic (f:Relation.Pairs α β) : Relation α β
+| pair {α β: Type u} (a: α)(b: β): Relation α β
 | comp (R:Relation α β) (S:Relation β γ) : Relation α γ
 | full (α β: Type u): Relation α β
 | converse (R:Relation α β) : Relation β α
@@ -64,9 +65,10 @@ def Relation.codomain (_: Relation α β) := β
 
 
 -- Relation.eval takes a relation and returns a function that tells use whether a pair is in the function.
-def Relation.eval (R':Relation α β) : Relation.Pairs α β :=
-match R' with
+def Relation.eval (R:Relation α β) : Relation.Pairs α β :=
+match R with
 | atomic f => f
+| pair a b => fun (a': α )(b': β ) => a = a' ∧ b = b'
 | comp R S => fun (a : R.domain) (b : S.codomain) =>
   ∃ (c : S.domain), Relation.eval R a c ∧ Relation.eval S c b
 | full α β => fun _ _ => True
@@ -141,6 +143,18 @@ cases c₁ <;> cases c <;> simp at h₁ h₂ h₃ <;> subst h₁<;> subst h₃
     constructor
     use Sum.inr a
     constructor
+
+
+
+-- https://en.wikipedia.org/wiki/Allegory_(mathematics)
+-- Allegory laws for intersection
+-- Prove, intersection is idempotent, associative, commutative
+-- Prove, converse distributes over intersection
+  -- Question: should complement distribute over union?
+    -- Does complement form a second allegory structure?
+-- composition is semi-distributive over union
+-- modularity law
+
 
 
 theorem coproduct_square_equiv_prod : α ⊕ α ≃ Bool × α :=
@@ -287,62 +301,21 @@ theorem Relation.coproduct_product_dist (R: Relation α β) (S: Relation γ δ) 
 
 -- -- T⊕(R⊗S) = (T⊕R) ⊗ (T⊕S)
 -- theorem Relation.product_coproduct_dist (R: Relation α β) (S: Relation γ δ) (T: Relation ε ζ) :
---   eval (coproduct T (product R S)) =
---     fun (a:(ε ⊕ α × γ)) (b: ζ ⊕ β × δ) =>
---       let coprodTimesCoprod := eval (product (coproduct T R) (coproduct T S))
-
---       let isoA := (Equiv.prodSumDistrib ε α γ )
---       let isoA' := (Equiv.sumProdDistrib ε α γ )
---        -- I need:   ε ⊕ α × γ ≃ (ε ⊕ α) × (ε ⊕ γ))
---        -- Equiv.prodSumDistrib ε α γ gives: ε × (α ⊕ γ) ≃ ε × α ⊕ ε × γ
---        -- Equiv.sumProdDistrib ε α γ gives: (ε ⊕ α) × γ ≃ ε × γ ⊕ α × γ
---        -- These are just two sides of the same distributive law. But I need the other distributive law for adding over a product.
 
 
---       let isoB := (Equiv.prodSumDistrib β δ ζ)
---       coprodTimesCoprod (isoA a) (isoB b) := by
---   apply funext; intro a; apply funext; intro b
---   dsimp [Relation.eval, Equiv.sumProdDistrib]
---   cases a <;> cases b
---     . simp
---     . simp
---     . simp
---     . simp
+-- Other Relation Theorems
 
+--Pairs:
+-- Prove that every relation is equal to a (possibly infinite) union of pairs. Not sure if my current union definition allows for infinite unions.
 
--- theorem Relation.product_coproduct__dist (R: Relation α β) (S: Relation γ δ) (T: Relation ε ζ) :
---   eval (product (coproduct R S) T) = eval (coproduct (product R T) (product S T)) := sorry
+-- Prove that if S ⊆ R and S is non-empty then there is a composition T;R;T' = S such that T and T' are subrelations of Id
 
+-- Prove demorgan dualities between union and intersection
 
--- @[simp]
--- theorem Relation.complement_coproduct (R: Relation α β) (S: Relation γ δ) :
---   eval (complement (coproduct R S)) = eval (coproduct (complement R) (complement S)) := by
---   apply funext; intro αβ ; apply funext; intro  βδ
---   cases αβ <;> cases  βδ
---   . simp [Relation.eval]
---   . simp [Relation.eval, Relation.complement, Relation.coproduct]
---   . simp [Relation.eval]
---   . simp [Relation.eval]
+-- Prove distributive laws from Tarski paper for union and intersection.
 
+-- Prove that Types and Relations form a category.
 
+-- Show that this category forms an allegoy with union.
 
--- theorem Relation.complement_relativeComp (R: Relation α β) (S: Relation β γ) :
---   eval (complement (relativeComp R S)) = eval (relativeComp (complement R) (complement S)) := by
---   apply funext; intro a; apply funext; intro c
---   simp [Relation.eval, Relation.complement, Relation.relativeComp]
---   apply Iff.intro
---   . intro h
---     by_contra h'
---     case h.h.mp =>
---       cases h with
---       | intro c₁ hc₁ =>
---         apply h' c₁
---         . simp [Relation.eval, Relation.complement] at hc₁
---           exact hc₁.left
---         . simp [Relation.eval, Relation.complement] at hc₁
---           exact hc₁.right
---   . intro h
---     by_contra h'
---     case h.h.mpr =>
---       by_contra h'
---       apply h' (fun x hRax => h x hRax)
+--
