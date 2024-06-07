@@ -10,12 +10,10 @@ structure PureRel where
   -- Evaluates R with the pair x, y. Note however, that x and y are also themselves relations, unlike with the usual way of thinking.
   eval (x R y: Rel): Prop
 
-
-
-  ax_empty: ∃ (E: Rel), ∀ (x y: Rel), ¬ (eval x E y)
+  ax_empty: ∃ (E: Rel), (∀ (x y: Rel), ¬ (eval x E y))
 
   -- This is the actual empty relation element used in the proof of ax_empty.
-  empty := ax_empty.fst
+  empty : Rel := ax_empty.fst
 
   ax_extensionality (R S: Rel) :  R = S ↔ ∀ (x y: Rel), eval x R y = eval x S y
 
