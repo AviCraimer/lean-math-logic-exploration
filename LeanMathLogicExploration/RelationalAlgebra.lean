@@ -324,6 +324,7 @@ cases c₁ <;> cases c <;> simp at h₁ h₂ h₃ <;> subst h₁<;> subst h₃
     -- Does complement form a second allegory structure?
 
 
+-- *** Odds and Ends (Very Rough WIP) ***
 
 -- theorem Relation.product_coproduct__dist (R: Relation α α) (S: Relation α α) (T: Relation α α) :
 --   eval (product (coproduct R S) T) = eval (coproduct (product R T) (product S T)) := sorry
@@ -368,5 +369,3 @@ theorem Relation.coproduct_product_dist (R: Relation α β) (S: Relation γ δ) 
 -- Prove that Types and Relations form a category.
 
 -- Show that this category forms an allegoy with union.
-
---
