@@ -3,36 +3,41 @@ set_option pp.coercions false
 
 universe u v
 
-abbrev Relation.Pairs α β  := (a:α) -> (b:β) -> Prop
+variable {A B: Type u}
+
+
+abbrev Relation.Pairs (α β: Type u)  := (a:α) -> (b:β) -> Prop
+
+
 
 -- The Relation inductive type gives the syntactic composition structure of relations. Relation.eval defines the semantic domain for this syntax.
-inductive Relation : (Dom Cod : Type u) -> Type (u + 1)
+inductive Relation : (Dom Cod : Type u) -> Type (u+1)
 -- atomic forms a relation directly from a set of pairs
-| atomic (f:Relation.Pairs α β) : Relation α β
+| atomic {α β : Type u} (f:Relation.Pairs α β) : Relation α β
 
 -- pair forms a relation as a pair of two values. This is useful for forming higher-order relations from existing relations.
 | pair {α β: Type u} (a: α)(b: β): Relation α β
 
 -- comp stands for composition, and it is the sequential composition operation, which is defined analogously to function composition.
-| comp (R:Relation α β) (S:Relation β γ) : Relation α γ
+| comp {α β γ : Type u} (R:Relation α β) (S:Relation β γ) : Relation α γ
 
 -- converse is one of the involutions of relations, it reverses the direction of the pairs.
-| converse (R:Relation α β) : Relation β α
+| converse {α β : Type u} (R:Relation α β) : Relation β α
 
 -- complement is the other involution, it consists of the set theoretic complement of pairs relative to a given relation.
-| complement (R:Relation α β) : Relation α β
+| complement {α β : Type u} (R:Relation α β) : Relation α β
 
 -- full is the relation which is the full subset of the Cartersian product of domain and codomain. It's complement is an empty relation.
 | full (α β: Type u): Relation α β
 
 -- product is a monoidal product in the category Rel. It corresponds to one of the conjunction operations in linear logic, usually represented as ⊗.
-| product (R: Relation α β )(S: Relation γ δ) : Relation (α × γ ) (β × δ)
+| product  {α β γ δ : Type u} (R: Relation α β )(S: Relation γ δ) : Relation (α × γ) (β × δ)
 
 -- This is the coproduct in the category Rel. It corresponds to one of the disjunction operations in linear logic, usually represented as ⊕. It is interpreted as a disjoint union of domain, codomain, and relational pairs.
-| coproduct (R: Relation α β )(S: Relation γ δ) : Relation (Sum α γ ) (Sum β δ)
+| coproduct {α β γ δ : Type u} (R: Relation α β )(S: Relation γ δ) : Relation (Sum α γ ) (Sum β δ)
 
 -- Copy is the diagonal relation, connecting each value in the domain to a pair of identical copies in the codomain. The converse of this is a "merge" relation that sents pairs of identicals to a single copy.  The converse complement (linear negation) of copy is a "different" relation that sends pairs of different elements to all elements.
-| copy (α :Type u): Relation α (α × α)
+| copy (α : Type u): Relation α (α × α)
 
 -- cocopy is the categorical dual of copy.  It relates the left and right values of a reflexitve sum type to their common value. This allows us to collapse or merge the disjoint sets of the Sum into a single set which is used to define union. The converse is a "split" relation that splits a single value into two parallel copies in disjoint sets.
 | cocopy (α: Type u): Relation (Sum α α) α
