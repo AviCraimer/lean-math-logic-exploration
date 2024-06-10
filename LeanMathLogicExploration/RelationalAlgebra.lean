@@ -3,10 +3,12 @@ set_option pp.coercions false
 
 universe u v
 
-abbrev Relation.Pairs α β  := (a:α) -> (b:β) -> Prop
+
+
+abbrev Relation.Pairs (α :Sort u) ( β: Sort v)  := (a:α) -> (b:β) -> Prop
 
 -- The Relation inductive type gives the syntactic composition structure of relations. Relation.eval defines the semantic domain for this syntax.
-inductive Relation :  (Dom : Type _) -> (Cod : Type _) -> Type _
+inductive Relation :  (Dom : Sort u) -> (Cod : Sort v) -> Type (max u v)
 -- atomic forms a relation directly from a set of pairs
 | atomic (f:Relation.Pairs α β) : Relation α β
 
@@ -17,7 +19,7 @@ inductive Relation :  (Dom : Type _) -> (Cod : Type _) -> Type _
 | comp   (R:Relation α β) (S:Relation β γ) : Relation α γ
 
 -- converse is one of the involutions of relations, it reverses the direction of the pairs.
-| converse  (R:Relation α β) : Relation β α
+| converse {β : Sort u} {α : Sort v} (R:Relation α β) : (Relation β α)
 
 -- complement is the other involution, it consists of the set theoretic complement of pairs relative to a given relation.
 | complement  (R:Relation α β) : Relation α β
