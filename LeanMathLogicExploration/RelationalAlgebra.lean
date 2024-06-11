@@ -1,19 +1,29 @@
-import MathLib.Tactic
+import Mathlib.Tactic
 set_option pp.coercions false
 
 universe u v
 
-variable {A B: Type u}
+-- variable {A B: Type u}
+
+-- #check A × B
+#check PLift Nat
+
+abbrev Relation.Pairs (α β: Type u): Type u  := (a:α) -> (b:β) -> Prop
+
+def ex : Relation.Pairs Nat Nat := fun _ _ => True
+
+def typeOf {α : Sort u}(_ : α ) :=  α
+def sortOfTypeOf {α : Sort u}(_ : α ) :=  Sort u
 
 
-abbrev Relation.Pairs (α β: Type u)  := (a:α) -> (b:β) -> Prop
 
-
+inductive test : (α: Type u ) -> Type u
+ | mk (f: α -> Prop ) : test α
 
 -- The Relation inductive type gives the syntactic composition structure of relations. Relation.eval defines the semantic domain for this syntax.
-inductive Relation : (Dom Cod : Type u) -> Type (u+1)
+inductive Relation  :  (Dom:Type u) -> (Cod:Type u) -> Type (u+1)
 -- atomic forms a relation directly from a set of pairs
-| atomic {α β : Type u} (f:Relation.Pairs α β) : Relation α β
+| atomic  {α β: Type u}(f:Relation.Pairs α β)  :   Relation α β
 
 -- pair forms a relation as a pair of two values. This is useful for forming higher-order relations from existing relations.
 | pair {α β: Type u} (a: α)(b: β): Relation α β
@@ -63,6 +73,8 @@ def Relation.codomain (_: Relation α β) := β
 
 -- *** Eval - Semantics for Relations ***
 -- Relation.eval defines the semantic domain of the Relation inductive type. It allows us to prove that different syntactic Relation expressions are extensionally equal.
+
+
 def Relation.eval (R:Relation α β) : Relation.Pairs α β :=
 match R with
 -- For atomic relations, we simply return the pair function
@@ -113,6 +125,13 @@ match R with
   | Sum.inr a' => a = a'
   | _ => False
 
+
+-- Expresses the evaluation function as a relation
+def Relation.evalRel  {α β : Type u}  : Relation (Relation α β) (PLift (Relation.Pairs α  β)) :=
+  atomic fun (R:Relation α β) (f: PLift (Pairs α β) ) =>
+    let evaluatedR := PLift.up (Relation.eval R)
+  evaluatedR = f
+
 -- **DEFINED RELATION OPERATIONS** --
 
 -- Merge is the converse of copy
@@ -156,7 +175,7 @@ def Relation.id (α : Type u) := comp (copy α) (merge α)
 def Relation.notEqual (α : Type u) := complement (Relation.id α)
 
 
--- *** Simpligication Theorems ***
+-- *** Simplification Theorems ***
 
 -- Double converse equals original relation
 @[simp]
