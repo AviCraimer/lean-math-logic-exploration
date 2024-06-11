@@ -5,9 +5,6 @@ universe u v
 
 abbrev Relation.Pairs (α β: Type u): Type u  := (a:α) -> (b:β) -> Prop
 
-inductive test : (α: Type u ) -> Type u
- | mk (f: α -> Prop ) : test α
-
 -- The Relation inductive type gives the syntactic composition structure of relations. Relation.eval defines the semantic domain for this syntax.
 inductive Relation  :  (Dom:Type u) -> (Cod:Type u) -> Type (u+1)
 -- atomic forms a relation directly from a set of pairs
