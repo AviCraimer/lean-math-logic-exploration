@@ -3,19 +3,7 @@ set_option pp.coercions false
 
 universe u v
 
--- variable {A B: Type u}
-
--- #check A × B
-#check PLift Nat
-
 abbrev Relation.Pairs (α β: Type u): Type u  := (a:α) -> (b:β) -> Prop
-
-def ex : Relation.Pairs Nat Nat := fun _ _ => True
-
-def typeOf {α : Sort u}(_ : α ) :=  α
-def sortOfTypeOf {α : Sort u}(_ : α ) :=  Sort u
-
-
 
 inductive test : (α: Type u ) -> Type u
  | mk (f: α -> Prop ) : test α
