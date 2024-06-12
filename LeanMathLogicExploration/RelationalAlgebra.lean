@@ -319,6 +319,33 @@ cases c₁ <;> cases c <;> simp at h₁ h₂ h₃ <;> subst h₁<;> subst h₃
     use Sum.inr a
     constructor
 
+-- Tarski's theory works for relations with the same domain and codomain
+abbrev EndoRel (α: Type U) := Relation α α
+
+
+abbrev one (α) := full α α
+abbrev zero (α) := Relation.empty α α
+abbrev one' (α) := Relation.id α
+abbrev zero' (α) := Relation.notEqual α
+
+--1
+theorem tarski1941_axiom_1 : ∀ (x y: α), (Relation.eval (one α)) x y := by
+simp [Relation.eval]
+
+theorem tarski1941_axiom_2 : ∀ (x y: α), ¬(Relation.eval (zero α)) x y := by
+simp [Relation.eval]
+
+theorem tarski1941_axiom_3 : ∀ (x: α), (Relation.eval (one' α)) x x := by
+simp [Relation.eval] ; intro x ; exact ⟨(x, x), by simp⟩
+
+theorem tarski1941_axiom_4 : ∀ (x y z: α),∀ (R: EndoRel α), (eval R x y ∧ eval (one' α) y z) → (eval R x z) := by
+intros x y z R; unfold one' Relation.id; simp [Relation.eval, Relation.merge, Relation.domain]; intro evalR yEqz ; rw [yEqz.symm]; use evalR
+
+
+-- theorem tarski1941_axiom_4 : ∀ (x: α), ¬(Relation.eval (zero' α)) x x := by
+-- simp [Relation.eval] ; intro x ; exact ⟨(x, x), by simp⟩
+
+
 -- TODO: Prove the remaining theorems about union and intersection presented in Tarski 1941 paper.
 
 -- TODO: Prove that the so-called "allegory" laws holds for relations.
@@ -331,6 +358,35 @@ cases c₁ <;> cases c <;> simp at h₁ h₂ h₃ <;> subst h₁<;> subst h₃
   -- Questions:
     -- should complement distribute over union?
     -- Does complement form a second allegory structure?
+
+
+-- *** First Order Logic
+
+-- Based on EndoRelations and Relations on products of EndoRelations
+  -- Coproducts are used to define union, but these are never exposed as an interface in the logic.
+-- Univesally quantified props
+  -- Implicit free variables
+--Existentially quantified props
+  -- Compose with full at one end or the other to implicity existentially quantify
+-- Not, complement
+-- And, Intersection
+-- Or, Union
+-- Evaluate at constant
+  -- Compose with pair constructor on left or right or both left and right.
+-- The whole relation is interpreted as a proposition by asking if there are any pairs in it. If it is empty the associated proposition is false.
+-- Arity and co-arity
+  -- Cartesian product on the right of relation gives arity
+  -- Cartesian product on the left of relation gives coarity
+  -- We ignore different bracketings (we can have some cannonical bracketing from top to bottom)
+
+-- Higher Order Logic
+  -- Relation Types
+  -- Base type of individuals
+  -- Relations built inductively from relations on individuals
+  -- Could have a version of the inductive type which only takes the base type as a type parameter. This way all higher order relations built on a given base type could live in the same type universe (I think)
+  -- Use ⊕ and ⊗ instead of union and intersection for or and and.
+
+
 
 
 -- *** Odds and Ends (Very Rough WIP) ***
