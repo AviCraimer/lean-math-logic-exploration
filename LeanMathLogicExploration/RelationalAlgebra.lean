@@ -69,8 +69,8 @@ match R with
 | pair a b => fun (a': α )(b': β ) => a = a' ∧ b = b'
 
 -- A sequential composition of relations yeilds pair if there exists a common element in the middle Codomain/Domain. Note that for relations which have the structure of a function (i.e., relations with the properties of totality and determinism) this definition specializes to the standard definition of function composition.
-| comp R S => fun (a : R.domain) (b : S.codomain) =>
-  ∃ (c : S.domain), Relation.eval R a c ∧ Relation.eval S c b
+| comp R S => fun (a : R.domain) (c : S.codomain) =>
+  ∃ (b : S.domain), Relation.eval R a b ∧ Relation.eval S b c
 
 -- A full relation has all pairs so returns a constant True proposition.
 | full α β => fun _ _ => True
@@ -322,13 +322,12 @@ cases c₁ <;> cases c <;> simp at h₁ h₂ h₃ <;> subst h₁<;> subst h₃
 -- Tarski's theory works for relations with the same domain and codomain
 abbrev EndoRel (α: Type U) := Relation α α
 
-
 abbrev one (α) := full α α
 abbrev zero (α) := Relation.empty α α
 abbrev one' (α) := Relation.id α
 abbrev zero' (α) := Relation.notEqual α
 
---1
+-- *** Prove Tarski Axioms as Special Cases ***
 theorem tarski1941_axiom_1 : ∀ (x y: α), (Relation.eval (one α)) x y := by
 simp [Relation.eval]
 
@@ -341,12 +340,7 @@ simp [Relation.eval] ; intro x ; exact ⟨(x, x), by simp⟩
 theorem tarski1941_axiom_4 : ∀ (x y z: α),∀ (R: EndoRel α), (eval R x y ∧ eval (one' α) y z) → (eval R x z) := by
 intros x y z R; unfold one' Relation.id; simp [Relation.eval, Relation.merge, Relation.domain]; intro evalR yEqz ; rw [yEqz.symm]; use evalR
 
-
--- theorem tarski1941_axiom_4 : ∀ (x: α), ¬(Relation.eval (zero' α)) x x := by
--- simp [Relation.eval] ; intro x ; exact ⟨(x, x), by simp⟩
-
-
--- TODO: Prove the remaining theorems about union and intersection presented in Tarski 1941 paper.
+-- TODO: Prove the remaining axioms and theorems about union and intersection presented in Tarski 1941 paper.
 
 -- TODO: Prove that the so-called "allegory" laws holds for relations.
 -- https://en.wikipedia.org/wiki/Allegory_(mathematics)
@@ -361,6 +355,32 @@ intros x y z R; unfold one' Relation.id; simp [Relation.eval, Relation.merge, Re
 
 
 -- *** First Order Logic
+
+-- Helper for getArityType. Note that arity' is arity - 1.
+def getProduct (α :Type u) (arity': Nat):Type u :=
+  match arity' with
+    | n+1 => α × (getProduct α n)
+    | _ => α
+
+-- Returns PUnit for arity 0, returns α for arity 1, α × α for arity 2, etc.
+def getArityType (α :Type u)(arity: Nat): Type u :=
+if arity == 0 then PUnit else  getProduct α (arity-1)
+
+
+
+
+
+-- 2 => α × α
+
+-- not zero
+-- arity' := 3
+-- match artiy' with 2 + 1 => α × getArityType α 2
+-- match artiy' with 1 + 1 => α × getArityType α 1
+
+
+-- abbrev EndoRel (α: Type u) := Relation α α
+
+-- def FirstOrderRelation (α : Type u) (arity: Nat) (coarity: Nat) :
 
 -- Based on EndoRelations and Relations on products of EndoRelations
   -- Coproducts are used to define union, but these are never exposed as an interface in the logic.
