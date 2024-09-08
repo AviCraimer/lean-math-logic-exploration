@@ -5,6 +5,10 @@ universe u v
 
 abbrev Relation.Pairs (α β: Type u): Type u  := (a:α) -> (b:β) -> Prop
 
+
+
+#check fun {α β: Type u} (R S: Relation.Pairs α β ) => R ≤ S
+
 -- The Relation inductive type gives the syntactic composition structure of relations. Relation.eval defines the semantic domain for this syntax.
 inductive Relation  :  (Dom:Type u) -> (Cod:Type u) -> Type (u+1)
 -- atomic forms a relation directly from a set of pairs
@@ -266,6 +270,16 @@ theorem Relation.assoc_comp (R: Relation α β) (S: Relation β γ) (T: Relation
   . intro ⟨b, hab, ⟨c, hbc, hcd⟩⟩
     exact ⟨c, ⟨b, hab, hbc⟩, hcd⟩
 
+--- PRODUCT AND COPRODUCT THEOREMS
+-- I can only prove this up to isomorphism since the order matters for exact equality.
+-- theorem Relation.coproduct.comm {R : Relation α β} {S : Relation γ δ} :
+--   eval (coproduct R S) = eval (coproduct S R) := by
+--   apply funext; intro ab; apply funext; intro cd
+--   cases ab <;> cases cd
+--   . simp [Relation.eval]
+--   . simp [Relation.eval]
+--   . simp [Relation.eval]
+--   . simp [Relation.eval]
 -- TODO: Prove associativity and commutativity of product and coproduct
 
 
@@ -321,8 +335,194 @@ cases c₁ <;> cases c <;> simp at h₁ h₂ h₃ <;> subst h₁<;> subst h₃
     use Sum.inr a
     constructor
 
+-- Define the LE instance for Relation
+-- Now we can use ≤ notation for relations
+  instance : LE (Relation α β) where
+    le R S := ∀ a b, eval R a b → eval S a b
+
+--  R ≤  S if and only if they eval to pair functions that are less than or equal to eachother.
+theorem Relation.le_rel_iff_le_eval {α β : Type u} {R S : Relation α β} :
+  R ≤ S ↔ (eval R ≤ eval S) := by
+  constructor
+  · intro h
+    intro a b
+    exact h a b
+  · intro h
+    intro a b
+    exact h a b
+
+
+-- Prove that this ordering is reflexive
+theorem Relation.le_refl (R : Relation α β) : R ≤ R := by
+  intros a b h
+  exact h
+
+-- Prove that this ordering is transitive
+theorem Relation.le_trans {R S T : Relation α β} (h₁ : R ≤ S) (h₂ : S ≤ T) : R ≤ T := by
+  intros a b hR
+  exact h₂ a b (h₁ a b hR)
+
+-- Create the Preorder instance
+instance : Preorder (Relation α β) where
+  le := (· ≤ ·)
+  le_refl := Relation.le_refl
+  le_trans := @Relation.le_trans _ _
+
+
+theorem Relation.le_union_left (R S : Relation α β) : R ≤ Relation.union R S := by
+  intros a b h
+  simp [Relation.eval, Relation.union]
+  use Sum.inl b
+  constructor
+  · use Sum.inl a
+  · simp
+
+theorem Relation.le_union_right (R S : Relation α β) : S ≤ Relation.union R S := by
+  intros a b h
+  simp [Relation.eval, Relation.union]
+  use Sum.inr b
+  constructor
+  · use Sum.inr a
+  · simp
+
+theorem Relation.union_le {R S T : Relation α β} (hR : R ≤ T) (hS : S ≤ T) : Relation.union R S ≤ T := by
+  intros a b h
+  simp [Relation.eval, Relation.union] at h
+  rcases h with ⟨c, ⟨d, hd, hc⟩, hb⟩
+  cases d
+  case inl d' =>
+    cases c
+    case inl c' =>
+      simp at hc hb
+      subst hb
+      subst hd
+      exact hR _ _ hc
+    case inr _ => contradiction
+  case inr d' =>
+    cases c
+    case inl _ => contradiction
+    case inr c' =>
+      simp at hc hb
+      subst hb
+      subst hd
+      exact hS _ _ hc
+
+
+
+-- Define custom equality for Relation
+def Relation.ext_eq (R S : Relation α β) : Prop :=
+  R ≤ S ∧ S ≤ R
+
+-- Notation for extensional equality
+infix:50 " ≈ " => Relation.ext_eq
+
+
+theorem Relation.eval_eq_iff_eq {R S : Relation α β} : (eval R = eval S) ↔ (R ≈ S) := by
+  constructor
+  · intro h
+    unfold ext_eq
+    constructor
+    · apply le_rel_iff_le_eval.mpr
+      rw [h]
+      -- exact le_refl _
+    · apply le_rel_iff_le_eval.mpr
+      rw [←h]
+      -- exact le_refl _
+  · intro h
+    unfold ext_eq at h
+    apply funext
+    intro a
+    apply funext
+    intro b
+    apply propext
+    constructor
+    · exact (le_rel_iff_le_eval.mp h.left) a b
+    · exact (le_rel_iff_le_eval.mp h.right) a b
+
+
+
+
+-- Prove reflexivity
+@[refl]
+theorem Relation.ext_eq_refl (R : Relation α β) : R ≈ R :=
+  ⟨le_refl R, le_refl R⟩
+
+-- Prove symmetry
+@[symm]
+theorem Relation.ext_eq_symm {R S : Relation α β} (h : R ≈ S) : S ≈ R :=
+  ⟨h.2, h.1⟩
+
+-- Prove transitivity
+@[trans]
+theorem Relation.ext_eq_trans {R S T : Relation α β} (h₁ : R ≈ S) (h₂ : S ≈ T) : R ≈ T :=
+  ⟨le_trans h₁.1 h₂.1, le_trans h₂.2 h₁.2⟩
+
+theorem Relation.ext_eq_iff_eval_eq {R S : Relation α β} :
+    R ≈ S ↔ (∀ a b, eval R a b ↔ eval S a b) := by
+  constructor
+  · intro h
+    intro a b
+    exact ⟨fun hr => h.1 a b hr, fun hs => h.2 a b hs⟩
+  · intro h
+    constructor
+    · intro a b hr
+      exact (h a b).1 hr
+    · intro a b hs
+      exact (h a b).2 hs
+
+-- Extentional equality implies evaluation equality
+
+theorem Relation.eq_to_eval {R S : Relation α β} (h : R ≈ S) :
+    eval R = eval S := by
+  funext a b
+  exact propext (Relation.ext_eq_iff_eval_eq.1 h a b)
+
+theorem Relation.eval_to_eq {R S : Relation α β} (h: eval R = eval S) : R ≈ S := by
+  unfold ext_eq
+  constructor
+  · intro a b hR
+    rw [←h]
+    exact hR
+  · intro a b hS
+    rw [h]
+    exact hS
+
+
+
+theorem Relation.union_comm {R S : Relation α β} : Relation.union R S ≈ Relation.union S R := by
+  apply Relation.ext_eq_iff_eval_eq.2
+  intro a b
+  simp [Relation.union]
+  have h: coproduct R S = coproduct S R := sorry
+  rw [h]
+
+theorem Relation.union_assoc {R S T : Relation α β} :
+    Relation.union (Relation.union R S) T ≈ Relation.union R (Relation.union S T) := by
+
+    have h := Relaion.union_trans
+    rw [Relation.union_comm]
+
+
+-- Create Setoid instance
+-- A Setoid is a set together with an equivalence relation
+instance : Setoid (Relation α β) where
+  r :=  Relation.ext_eq
+  iseqv := {
+    refl := Relation.ext_eq_refl
+    symm := Relation.ext_eq_symm
+    trans := Relation.ext_eq_trans
+  }
+
+  instance : HasEquiv (Relation α β) where
+  Equiv := Relation.ext_eq
+
+
+
+
 -- Tarski's theory works for relations with the same domain and codomain
 abbrev Relation.EndoRel (α: Type U) := Relation α α
+
+
 
 
 
