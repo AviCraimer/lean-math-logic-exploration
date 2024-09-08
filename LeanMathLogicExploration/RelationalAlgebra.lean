@@ -90,7 +90,9 @@ match R with
   | Sum.inl a', Sum.inl b' => Relation.eval R a' b'
   | Sum.inr a', Sum.inr b' => Relation.eval S a' b'
   | _, _ => False
+
 | copy α => fun a (a1, a2) => a = a1 ∧ a = a2
+
 | cocopy α => fun (aa) a =>
   match aa with
   | Sum.inl a' => a' = a
@@ -320,27 +322,9 @@ cases c₁ <;> cases c <;> simp at h₁ h₂ h₃ <;> subst h₁<;> subst h₃
     constructor
 
 -- Tarski's theory works for relations with the same domain and codomain
-abbrev EndoRel (α: Type U) := Relation α α
+abbrev Relation.EndoRel (α: Type U) := Relation α α
 
-abbrev one (α) := full α α
-abbrev zero (α) := Relation.empty α α
-abbrev one' (α) := Relation.id α
-abbrev zero' (α) := Relation.notEqual α
 
--- *** Prove Tarski Axioms as Special Cases ***
-theorem tarski1941_axiom_1 : ∀ (x y: α), (Relation.eval (one α)) x y := by
-simp [Relation.eval]
-
-theorem tarski1941_axiom_2 : ∀ (x y: α), ¬(Relation.eval (zero α)) x y := by
-simp [Relation.eval]
-
-theorem tarski1941_axiom_3 : ∀ (x: α), (Relation.eval (one' α)) x x := by
-simp [Relation.eval] ; intro x ; exact ⟨(x, x), by simp⟩
-
-theorem tarski1941_axiom_4 : ∀ (x y z: α),∀ (R: EndoRel α), (eval R x y ∧ eval (one' α) y z) → (eval R x z) := by
-intros x y z R; unfold one' Relation.id; simp [Relation.eval, Relation.merge, Relation.domain]; intro evalR yEqz ; rw [yEqz.symm]; use evalR
-
--- TODO: Prove the remaining axioms and theorems about union and intersection presented in Tarski 1941 paper.
 
 -- TODO: Prove that the so-called "allegory" laws holds for relations.
 -- https://en.wikipedia.org/wiki/Allegory_(mathematics)
@@ -435,6 +419,11 @@ theorem Relation.coproduct_product_dist (R: Relation α β) (S: Relation γ δ) 
   . simp
   . simp
   . simp
+
+
+
+
+
 
 -- -- T⊕(R⊗S) = (T⊕R) ⊗ (T⊕S)
 -- theorem Relation.product_coproduct_dist (R: Relation α β) (S: Relation γ δ) (T: Relation ε ζ) :
