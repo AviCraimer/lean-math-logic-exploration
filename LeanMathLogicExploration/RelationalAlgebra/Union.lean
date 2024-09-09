@@ -103,31 +103,31 @@ theorem Relation.union.le_trans {R S T : Relation α β} (hR : R ≤ T) (hS : S 
 variable {R S : Relation α β }
 
 
--- TODO
-theorem Relation.union.comm  {α β : Type u } {R S : Relation α β } : (union S R) ≃ (union R S)   := by
-  apply eq_iff_eval_eq.2
-  intro a b
-  simp [union]
-  constructor
-  · intro h1
-    rcases h1 with ⟨b1, ⟨b', hb', hb1⟩, hb1_eq⟩
-    use b1
-    constructor
-    · use b'
-      constructor
-      · exact hb'
-      · cases b' <;> cases b1
-        . simp [eval]
-          · simp [eval]
-        . simp [eval]
-          · contradiction
-        . simp [eval]
-          · contradiction
-        . simp [eval]
+-- -- TODO
+-- theorem Relation.union.comm  {α β : Type u } {R S : Relation α β } : (union S R) ≃ (union R S)   := by
+--   apply eq_iff_eval_eq.2
+--   intro a b
+--   simp [union]
+--   constructor
+--   · intro h1
+--     rcases h1 with ⟨b1, ⟨b', hb', hb1⟩, hb1_eq⟩
+--     use b1
+--     constructor
+--     · use b'
+--       constructor
+--       · exact hb'
+--       · cases b' <;> cases b1
+--         . simp [eval]
+--           · simp [eval]
+--         . simp [eval]
+--           · contradiction
+--         . simp [eval]
+--           · contradiction
+--         . simp [eval]
 
 
 
--- TODO
-theorem Relation.union.assoc {R S T : Relation α β} :
-    union (union R S) T ≃ union R (union S T) := by
-    := sorry
+-- -- TODO
+-- theorem Relation.union.assoc {R S T : Relation α β} :
+--     union (union R S) T ≃ union R (union S T) := by
+--     := sorry
