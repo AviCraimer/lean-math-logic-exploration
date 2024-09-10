@@ -4,31 +4,14 @@ import  «LeanMathLogicExploration».RelationalAlgebra.Eq
 open Relation
 
 
+--- *** Relational Union ***
 
---- *** Union and Intersection Theorems ***
--- We give the direct set-theoretic definition of an intersection of two relations.
-def Relation.intersect.pairs_def (R: Relation α β) (S: Relation α β): Pairs α β  := fun a b => (eval R) a b ∧ (eval S) a b
+-- Compositional definition of union of relations. I should prove that this yeilds the set theoretic definition of union of pairs.
+def Relation.union (R: Relation α β) (S: Relation α β) := comp (comp (Relation.split α) (coproduct R S)) (cocopy β)
 
--- Proof that the compositional definition of intersection is equal to the set theoretic definiton.
-theorem Relation.intersect.pairs_eq_eval (R: Relation α β) (S: Relation α β) : intersect.pairs_def R S  = eval (Relation.intersection R S)   := by
-symm
-apply funext
-intro a
-apply funext
-intro b
-simp [Relation.eval, intersect.pairs_def, Relation.intersection]
-constructor
-intro ⟨⟨c1, c2⟩, ⟨⟨a1, a2⟩, ⟨ha1, ha2⟩, hr, hs⟩, ⟨hb1, hb2⟩⟩
-subst ha1
-subst ha2
-subst hb1
-subst hb2
-exact ⟨hr, hs⟩
-intro ⟨hr, hs⟩
-use (b, b)
-constructor
-use (a, a)
-constructor <;> rfl
+namespace Relation
+infix: 50 "∪" => Relation.union
+end Relation
 
 -- We give the direct set-theoretic definition of a union of two relations.
 def Relation.union.pairs_def (R: Relation α β) (S: Relation α β): Pairs α β  := fun a b => (eval R) a b ∨ (eval S) a b
@@ -100,30 +83,16 @@ theorem Relation.union.le_trans {R S T : Relation α β} (hR : R ≤ T) (hS : S 
       subst hd
       exact hS _ _ hc
 
-variable {R S : Relation α β }
-
 
 -- -- TODO
 -- theorem Relation.union.comm  {α β : Type u } {R S : Relation α β } : (union S R) ≃ (union R S)   := by
 --   apply eq_iff_eval_eq.2
 --   intro a b
---   simp [union]
+--   simp [union, eval]
 --   constructor
---   · intro h1
---     rcases h1 with ⟨b1, ⟨b', hb', hb1⟩, hb1_eq⟩
---     use b1
---     constructor
---     · use b'
---       constructor
---       · exact hb'
---       · cases b' <;> cases b1
---         . simp [eval]
---           · simp [eval]
---         . simp [eval]
---           · contradiction
---         . simp [eval]
---           · contradiction
---         . simp [eval]
+--   intro h
+--   rcases h with ⟨c, ⟨c₁, h₁, h₂⟩, h₃⟩
+--   cases c₁ <;> cases c <;> simp at h₁ h₂ h₃ <;> subst h₁<;> subst h₃
 
 
 

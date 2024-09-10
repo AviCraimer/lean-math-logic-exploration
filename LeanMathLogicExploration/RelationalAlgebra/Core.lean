@@ -1,6 +1,7 @@
 import Mathlib.Tactic
 set_option pp.coercions false
 
+
 universe u v
 
 abbrev Relation.Pairs (α β: Type u): Type u  := (a:α) -> (b:β) -> Prop
@@ -54,8 +55,6 @@ inductive Relation  :  (Dom:Type u) -> (Cod:Type u) -> Type (u+1)
 | right (α β :Type u): Relation α (Sum β α)
 
 open Relation
-
-
 
 def Relation.domain (_: Relation α β) := α
 def Relation.codomain (_: Relation α β) := β
@@ -132,11 +131,11 @@ def Relation.merge (α) := converse (copy α)
 def Relation.intersection (R: Relation α β) (S: Relation α β) := comp (comp (copy α) (product R S)) (Relation.merge β)
 
 
+
 -- Sends each a in α to left a and right a
 def Relation.split  (α : Type u) := converse (cocopy α)
 
--- Compositional definition of union of relations. I should prove that this yeilds the set theoretic definition of union of pairs.
-def Relation.union (R: Relation α β) (S: Relation α β) := comp (comp (Relation.split α) (coproduct R S)) (cocopy β)
+
 
 -- This is a notion from Peirce/Tarski of a second sequential composition operation that is the logical dual of ordinary composition. It replaces the  existential quantifier (∃) in the definition of composition with a universal quantifier (∀). However, it can be defined by a De Morgan equivalence.
 -- TODO: Add a proof that this compositional definition is equal to the direct logical definition.
@@ -160,11 +159,34 @@ def Relation.empty (α β :Type u) := complement (full α β)
 def Relation.different (α: Type u) := neg (copy α)
 
 -- The identity relation is the composition of copy and merge
-def Relation.id (α : Type u) := comp (copy α) (merge α)
+def Relation.IdRel (α : Type u) := comp (copy α) (merge α)
 
 -- The complement of identity is a relation consisting of all pairs of elements that are not equal.
-def Relation.notEqual (α : Type u) := complement (Relation.id α)
+def Relation.notEqual (α : Type u) := complement (IdRel α)
 
+namespace Relation
+--NOTATION FOR RELATION OPERATIONS
+
+  postfix: 80 "ᵒ" => converse -- \^o (hat and then letter)
+  postfix: 80 "⁻" => complement -- \^- (hat dash)
+  postfix: 80 "ᗮ" => Relation.negation -- \^bot
+  infixl: 70 " ⊗ " => product -- \otimes
+  infixl: 60 " ⊕ " => coproduct -- \oplus
+  infixl: 40 " ▹ " => comp -- \trans
+end Relation
+
+-- Residuation / Linear Implication
+
+def Relation.linImp (R S: Relation α β) := (Rᵒ▹S⁻)⁻
+abbrev Relation.linImpRight (R S: Relation α β) := Relation.linImp R S
+def Relation.linImpLeft (R S: Relation α β) := (S⁻▹Rᵒ)⁻
+
+namespace Relation
+--NOTATION FOR Linear Implication
+  infixr: 50 "⊸" => Relation.linImp -- \multi
+  infixl: 50 "⟜" => Relation.linImpLeft
+
+end Relation
 
 -- *** Simplification Theorems ***
 
