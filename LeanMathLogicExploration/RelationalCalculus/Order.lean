@@ -1,4 +1,4 @@
-import  «LeanMathLogicExploration».RelationalAlgebra.Core
+import  «LeanMathLogicExploration».RelationalCalculus.Core
 open Relation
 
 -- Ordering by Inclusion

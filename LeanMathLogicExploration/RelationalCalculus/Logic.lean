@@ -1,9 +1,8 @@
-import Mathlib.Tactic
-import  «LeanMathLogicExploration».RelationalAlgebra.Core
-import  «LeanMathLogicExploration».RelationalAlgebra.Order
-import  «LeanMathLogicExploration».RelationalAlgebra.Eq
-import  «LeanMathLogicExploration».RelationalAlgebra.Union
-import  «LeanMathLogicExploration».RelationalAlgebra.Intersection
+import  «LeanMathLogicExploration».RelationalCalculus.Core
+import  «LeanMathLogicExploration».RelationalCalculus.Order
+import  «LeanMathLogicExploration».RelationalCalculus.Eq
+import  «LeanMathLogicExploration».RelationalCalculus.Union
+import  «LeanMathLogicExploration».RelationalCalculus.Intersection
 
 open Classical
 namespace Relation.logic
@@ -16,7 +15,7 @@ abbrev TrueR : PropR := full {⋆} {⋆}
 abbrev FalseR : PropR := empty {⋆} {⋆}
 
 
-theorem bivaluedProps (R: PropR)(a b : PUnit) :  eval R a b = True ∨ eval R a b = False := by
+theorem bivaluedProps (R: PropR)(a b : {⋆}) :  eval R a b = True ∨ eval R a b = False := by
     cases a ; cases b ;
     simp
     exact Classical.em (eval R ⋆ ⋆)
@@ -46,25 +45,25 @@ infixl: 85 " ∨ " => orR
 def notR (P: PropR) : PropR := P⁻
 prefix: 95 "¬" => notR -- \neg
 
+
 def IfThenR (P Q: PropR) : PropR := (¬P) ∨ Q
-infixr: 83 " → " => IfThenR -- \neg
+infixr: 83 " → " => IfThenR -- \imp
 
 
 -- Turn any relation into a proposition by unit capping it with full on either side. Effectively this is the proposition that R is non-empty.
 def existsR (R: Relation α β ): PropR := full {⋆} α ▹ R ▹ full β {⋆}
 prefix: 83 "∃" => existsR
 
--- This is true iff R is full.
-def forAllR (R: Relation α β ) := ¬existsR (R⁻)
-prefix: 83 "∀" => forAllR
--- Note: I need to prove some more basic algeraic laws so I'm not always having to go back to eval.
-
-
 
 -- TODO
 theorem not_exists_iff_empty (R: Relation α β) : ¬∃ R ≃ TrueR ↔  R ≃ empty α β := by
   -- Convert to eval
   sorry
+
+-- Uses logical equivalency of ¬∃.¬P
+def forAllR (R: Relation α β ) := ¬existsR (R⁻)
+prefix: 83 "∀" => forAllR
+-- Note: I need to prove some more basic algeraic laws so I'm not always having to go back to eval.
 
 -- TODO
 theorem for_all_iff_full (R: Relation α β) : ∀ R ≃ TrueR ↔  R ≃ full α β := by sorry

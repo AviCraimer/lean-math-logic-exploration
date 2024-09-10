@@ -1,5 +1,5 @@
-import  «LeanMathLogicExploration».RelationalAlgebra.Core
-import  «LeanMathLogicExploration».RelationalAlgebra.Order
+import  «LeanMathLogicExploration».RelationalCalculus.Core
+import  «LeanMathLogicExploration».RelationalCalculus.Order
 open Relation
 
 

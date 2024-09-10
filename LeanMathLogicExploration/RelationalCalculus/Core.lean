@@ -127,14 +127,8 @@ def Relation.evalRel  {α β : Type u}  : Relation (Relation α β) (PLift (Rela
 -- Merge is the converse of copy
 def Relation.merge (α) := converse (copy α)
 
--- Compositional definition of intersection of relations. There is a proof below that this yeilds the set theoretic definition of intersection of pairs.
-def Relation.intersection (R: Relation α β) (S: Relation α β) := comp (comp (copy α) (product R S)) (Relation.merge β)
-
-
-
 -- Sends each a in α to left a and right a
 def Relation.split  (α : Type u) := converse (cocopy α)
-
 
 
 -- This is a notion from Peirce/Tarski of a second sequential composition operation that is the logical dual of ordinary composition. It replaces the  existential quantifier (∃) in the definition of composition with a universal quantifier (∀). However, it can be defined by a De Morgan equivalence.
