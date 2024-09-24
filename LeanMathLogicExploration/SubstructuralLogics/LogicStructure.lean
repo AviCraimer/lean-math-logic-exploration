@@ -15,7 +15,7 @@ def Punctuation.arity (_: Punctuation n) := n
 
 
 -- Very similar to the definition of a formula. Only structural difference is it is parameterized by a language.
--- Definition 2.14 p 19. Restall doesn't use the term "Combined Formulas" but it seems appropraite to have a name analogous to "Formulas"
+-- Definition 2.14 p 19. Restall doesn't use the term "Combined Formulas" but it seems appropriate to have a name analogous to "Formulas"
 mutual
   inductive CombinedFormula (L: Language)
   | formula (a: L.Formulas)
@@ -71,8 +71,29 @@ mutual
 end
 
 
+-- Definition 2.14, p. 19
 structure LogicStructure (L:Language) where
   punctuation : FinitePunctuation
   ComboFormulas := {S: (CombinedFormula L) | isInStructure punctuation S  }
   Singletons := {S: (CombinedFormula L) | ∃(P:L.Formulas), S = (formula P)  }
   Composites := {S: (CombinedFormula L) | isInStructure punctuation S ∧ ¬∃(A: L.Formulas), S = (formula A) }
+
+
+-- Definition 2.16, p. 20
+structure Consecution (L:Language)(S:LogicStructure L) where
+  antecedant: S.ComboFormulas
+  consequent: L.Formulas
+
+
+structure Inference (L:Language)(S:LogicStructure L) where
+  premises: Finset (Consecution L S)
+  conclusion: Consecution L S
+
+-- An axiom is an inference with an empty set of premises
+def Axiom (L:Language)(S:LogicStructure L) := {I: Inference L S | I.premises = ∅  }
+
+-- A rule is a set of inferences
+abbrev Rule (L:Language)(S:LogicStructure L) := Set (Inference L S)
+
+-- An axiom schema is a rule where all members are axioms.
+def AxiomSchema (L:Language)(S:LogicStructure L) := {R: Rule L S | ∀ (I: Inference L S), ((I ∈ R) →  I.premises = ∅ ) }
